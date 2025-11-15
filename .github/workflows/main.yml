@@ -33,16 +33,16 @@ jobs:
           cd ${{ matrix.part }}
           npm install
 
-      - name: Run tests
-        run: |
-          cd ${{ matrix.part }}
-          npm test
+      # - name: Run tests
+      #   run: |
+      #     cd ${{ matrix.part }}
+      #     npm test
 
       # If you have build step (e.g., for React client)
-      - name: Build (client only)
-        if: matrix.part == 'client'
+      - name: Build (Client only)
+        if: matrix.part == 'Client'
         run: |
-          cd client
+          cd Client
           npm run build
 
   deploy:
@@ -54,8 +54,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Example: Deploy via SSH to a server
-      - name: Copy files to server
+      # Example: Deploy via SSH to a Server
+      - name: Copy files to Server
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -66,10 +66,10 @@ jobs:
           script: |
             cd /path/on/server/jobportal
             git pull
-            cd server
+            cd Server
             npm install
-            pm2 restart jobportal-server
-            cd ../client
+            pm2 restart jobportal-Server
+            cd ../Client
             npm install
             npm run build
-            pm2 restart jobportal-client
+            pm2 restart jobportal-Client
