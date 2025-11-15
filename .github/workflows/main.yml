@@ -1,0 +1,75 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        part: [client, server]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Change directory to ${{ matrix.part }}
+        run: cd ${{ matrix.part }}
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.part }}
+          npm install
+
+      - name: Run tests
+        run: |
+          cd ${{ matrix.part }}
+          npm test
+
+      # If you have build step (e.g., for React client)
+      - name: Build (client only)
+        if: matrix.part == 'client'
+        run: |
+          cd client
+          npm run build
+
+  deploy:
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Example: Deploy via SSH to a server
+      - name: Copy files to server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          # your deployment commands, e.g., pull, install, restart
+          script: |
+            cd /path/on/server/jobportal
+            git pull
+            cd server
+            npm install
+            pm2 restart jobportal-server
+            cd ../client
+            npm install
+            npm run build
+            pm2 restart jobportal-client
